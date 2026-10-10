@@ -98,8 +98,8 @@ button.l{font-family:var(--font-sans)}`;
     head.append(el("span", "p " + state, STATES[state] + (d.w ? ": " + d.w : "")));
     root.append(head);
 
-    // Work counts as done once delivery has started.
-    if (work.length) root.append(track("Werk", work, step ? work.length + 1 : p, step ? "d" : state));
+    // Once delivery has started the work track is done and only adds noise.
+    if (work.length && !step) root.append(track("Werk", work, p, state));
     if (delivery.length && (step || p >= work.length)) root.append(track("Levering", delivery, step, state));
 
     const k = d.k || "c";
