@@ -9,7 +9,8 @@
 //   l optional [label, https-url]
 // Run card for multi-item runs: R({t,m,v,s,w,q,a,o,n,y,d,k,x,l})
 //   t title, m meta line, v version, s/w state as in S
-//   q items: [[ref, label, status]], status "" open | r running | u your turn | b blocked | ok accepted
+//   q items: [[ref, label, status, count]], status "" open | r running | u your turn | b blocked | ok accepted;
+//     count is how many issues a grouped item such as "#1423–27" covers (default 1)
 //   a acceptance criteria, o out of scope or stop points, n open points (string lists)
 //   y with d: show the delivery track of that type at step d
 //   k/x/l next step as in S
@@ -51,6 +52,7 @@ button.l{font-family:var(--font-sans)}
 .dot.ok{background:var(--success);opacity:1}.dot.r{background:var(--primary);opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 30%,transparent)}
 .dot.u{background:var(--warning);opacity:1}.dot.b{background:var(--destructive);opacity:1}
 .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 16px}
+.s+.s{margin-top:14px}
 .cols ul{margin:0;padding-left:18px}.cols li{margin:1px 0}`;
 
   const el = (tag, cls, text) => {
@@ -163,9 +165,11 @@ button.l{font-family:var(--font-sans)}
   function run(d) {
     const state = d.s || "a";
     const items = d.q || [];
-    const accepted = items.filter((q) => q[2] === "ok").length;
+    const size = (q) => q[3] || 1;
+    const total = items.reduce((sum, q) => sum + size(q), 0);
+    const accepted = items.reduce((sum, q) => sum + (q[2] === "ok" ? size(q) : 0), 0);
     const root = el("div", "s");
-    root.append(header(d, state, [items.length ? `${accepted}/${items.length} geaccepteerd` : "", d.m]));
+    root.append(header(d, state, [items.length ? `${accepted}/${total} geaccepteerd` : "", d.m]));
     if (items.length) {
       const grid = el("div", "g");
       for (const [ref, label, status] of items) {
