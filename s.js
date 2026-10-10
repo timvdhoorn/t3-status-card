@@ -7,6 +7,8 @@
 //   w what is awaited or blocking, shown under the title
 //   k next step: c command (default) | q decision | 0 nothing; x its text
 //   l optional [label, https-url]
+//   g optional step overview, one char per playbook step:
+//     k ok | r running | u your turn | b blocked | s skipped | - open
 // Run card for multi-item runs: R({t,m,v,s,w,q,a,o,n,y,d,k,x,l})
 //   t title, m meta line, v version, s/w state as in S
 //   q items: [[ref, label, status, count]], status "" open | r running | u your turn | b blocked | ok accepted;
@@ -55,7 +57,12 @@ button.l{font-family:var(--font-sans)}
 .it .dot.u{opacity:1}.it .dot.b{opacity:1}
 .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px 16px;padding-left:17px;font-size:13px}
 .lab{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-foreground)}
-.cols ul{margin:0;padding-left:16px}.cols li{margin:1px 0}`;
+.cols ul{margin:0;padding-left:16px}.cols li{margin:1px 0}
+.steps{display:flex;gap:3px;flex-wrap:wrap;padding-left:17px}
+.steps i{font:600 10px/16px var(--font-sans);font-style:normal;width:18px;text-align:center;border-radius:4px;background:var(--muted);color:var(--muted-foreground)}
+.steps i.k{background:var(--success);color:#fff}.steps i.r{background:var(--primary);color:#fff}
+.steps i.u{background:var(--warning);color:#000}.steps i.b{background:var(--destructive);color:#fff}
+.steps i.s{text-decoration:line-through;opacity:.6}`;
 
   const el = (tag, cls, text) => {
     const e = document.createElement(tag);
@@ -161,6 +168,16 @@ button.l{font-family:var(--font-sans)}
     if (delivery.length && (step || !work.length))
       card.append(progress("Levering", delivery, step, state));
     else if (work.length) card.append(progress("Werk", work, p, state));
+    if (d.g) {
+      const names = { k: "ok", r: "bezig", u: "jouw beurt", b: "geblokkeerd", s: "overgeslagen", "-": "open" };
+      const row = el("div", "steps");
+      [...d.g].forEach((c, n) => {
+        const i = el("i", c === "-" ? "" : c, String(n + 1));
+        i.title = `Stap ${n + 1}: ${names[c] || "open"}`;
+        row.append(i);
+      });
+      card.append(row);
+    }
     const next = nextStep(d);
     if (next) card.append(next);
     mount(card);
