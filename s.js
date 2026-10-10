@@ -41,8 +41,8 @@
 .seg i.done{background:var(--primary);opacity:.45}.seg i.cur{background:var(--primary)}
 .seg i.cur.u{background:var(--warning)}.seg i.cur.b{background:var(--destructive)}
 .prog b{color:var(--foreground);font-weight:600}
-.next{display:flex;gap:6px;flex-wrap:wrap;padding-left:17px;margin-top:2px}
-button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;max-width:100%;box-sizing:border-box;font:12px var(--font-mono);background:var(--code-background);color:var(--code-foreground);padding:4px 8px;border-radius:6px;border:1px solid var(--border)}
+.next{display:flex;gap:6px;flex-wrap:wrap;padding-left:17px;margin-top:2px;min-width:0}
+button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;max-width:100%;min-width:0;box-sizing:border-box;font:12px var(--font-mono);background:var(--code-background);color:var(--code-foreground);padding:4px 8px;border-radius:6px;border:1px solid var(--border)}
 button:hover,button:focus-visible{border-color:var(--ring)}
 button code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 button span{font:11px var(--font-sans);color:var(--muted-foreground);flex:none}
