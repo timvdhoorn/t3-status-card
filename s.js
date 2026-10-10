@@ -17,7 +17,7 @@
   };
   const STATES = { a: "bezig", u: "jouw beurt", c: "wacht op systeem", b: "geblokkeerd", d: "afgerond" };
   const CSS = `body{margin:0;font:13px/1.5 var(--font-sans);color:var(--foreground)}
-.s{display:grid;gap:8px;padding:10px 0 4px;border-top:1px solid var(--border)}
+.s{display:grid;gap:8px;padding:4px 0}
 .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}
 .t{font-weight:600}.m{color:var(--muted-foreground)}
 .p{font-size:11px;padding:0 7px;border-radius:99px;background:var(--muted)}
