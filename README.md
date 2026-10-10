@@ -3,7 +3,7 @@
 Task status card for T3 Code `html_render` frames. Loaded from jsDelivr so each render only sends data.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/timvdhoorn/t3-status-card@v4/s.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/timvdhoorn/t3-status-card@v5/s.js"></script>
 <script>S({y:"fix",t:"Task",i:"#12",p:3,x:"bun test"})</script>
 ```
 
@@ -35,3 +35,4 @@ Edit `s.js`, commit, push, tag the next version (`v3`) and update the version re
 - **v2:** separate work and delivery tracks with fixed labels per task type (feature, fix, infra, review, release), and states for agent busy, your turn, waiting on system, blocked and done. Based on 164 LMManagementSystem sessions: 132 of 323 bars were stuck on phase 5 "Opleveren" while merge, deploy or acceptance was still pending, "afgerond" was used before production checks, phase names varied, and 177 bars had no issue or PR reference.
 - **v3:** removed the top border line.
 - **v4:** run card `R()` for multi-item runs (item grid with accepted count, acceptance criteria, out-of-scope and stop points, open points, optional delivery track). Based on the `/build --auto t3` coordinator thread for ai-koppeling, where progress lived in long text blocks and the bar sat on "Uitvoeren 3/5" for hours.
+- **v5:** cards restyled after T3 subagent cards: bordered card, status dot with coloured state word, one compact progress line (work or delivery), refs on the right.
