@@ -21,7 +21,7 @@ See the header of `s.js` for fields.
 
 ## Releasing a change
 
-Edit `s.js`, commit, push, tag the next version (`v3`) and update the `@v2` reference in `AGENTS.md`. Don't move an existing tag: jsDelivr caches tagged versions for a long time. To preview before tagging, load `@<commit-sha>` in `html_preview`.
+Edit `s.js`, commit, push, tag the next version (`v3`) and update the version reference in `~/.agents/AGENTS.md` and `~/.agents/skills/build/references/RUN-CARD.md`. Don't move an existing tag: jsDelivr caches tagged versions for a long time. To preview before tagging, load `@<commit-sha>` in `html_preview`.
 
 ## Constraints
 
