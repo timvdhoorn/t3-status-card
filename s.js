@@ -7,6 +7,12 @@
 //   w what is awaited or blocking, shown next to the state
 //   k next step: c command (default) | q decision | 0 nothing; x its text
 //   l optional [label, https-url]
+// Run card for multi-item runs: R({t,m,v,s,w,q,a,o,n,y,d,k,x,l})
+//   t title, m meta line, v version, s/w state as in S
+//   q items: [[ref, label, status]], status "" open | r running | u your turn | b blocked | ok accepted
+//   a acceptance criteria, o out of scope or stop points, n open points (string lists)
+//   y with d: show the delivery track of that type at step d
+//   k/x/l next step as in S
 (() => {
   const TYPES = {
     feature: [["Scope", "Plan", "Bouwen", "Verifiëren"], ["PR", "CI", "Merge", "Deploy", "Productie", "Akkoord"]],
@@ -37,7 +43,15 @@ button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;max-widt
 button:hover,button:focus-visible{border-color:var(--ring)}
 button code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 button span{font:11px var(--font-sans);color:var(--muted-foreground);flex:none}
-button.l{font-family:var(--font-sans)}`;
+button.l{font-family:var(--font-sans)}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px}
+.it{display:flex;gap:6px;align-items:center;font-size:12px;padding:3px 8px;border-radius:6px;background:var(--card);border:1px solid var(--border);min-width:0}
+.it b{font-weight:600;font-variant-numeric:tabular-nums;flex:none}.it span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted-foreground)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--muted-foreground);opacity:.4}
+.dot.ok{background:var(--success);opacity:1}.dot.r{background:var(--primary);opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 30%,transparent)}
+.dot.u{background:var(--warning);opacity:1}.dot.b{background:var(--destructive);opacity:1}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 16px}
+.cols ul{margin:0;padding-left:18px}.cols li{margin:1px 0}`;
 
   const el = (tag, cls, text) => {
     const e = document.createElement(tag);
@@ -83,25 +97,16 @@ button.l{font-family:var(--font-sans)}`;
     return row;
   }
 
-  function render(d) {
-    const [work, delivery] = TYPES[d.y] || TYPES.feature;
-    const state = d.s || "a";
-    const p = d.p || 0;
-    const step = d.d || 0;
-    document.head.append(el("style", null, CSS));
-    const root = el("div", "s");
-
+  function header(d, state, extra) {
     const head = el("div", "r");
     head.append(el("span", "t", d.t));
-    if (d.i) head.append(el("span", "m", d.i));
+    for (const x of extra) if (x) head.append(el("span", "m", x));
     if (d.v) head.append(el("span", "p", "v" + d.v));
     head.append(el("span", "p " + state, STATES[state] + (d.w ? ": " + d.w : "")));
-    root.append(head);
+    return head;
+  }
 
-    // Once delivery has started the work track is done and only adds noise.
-    if (work.length && !step) root.append(track("Werk", work, p, state));
-    if (delivery.length && (step || p >= work.length)) root.append(track("Levering", delivery, step, state));
-
+  function nextStep(d) {
     const k = d.k || "c";
     const next = el("div", "r");
     if (k === "c" && d.x) {
@@ -120,10 +125,70 @@ button.l{font-family:var(--font-sans)}`;
       a.onclick = () => openLink(d.l[1]);
       next.append(a);
     }
-    root.append(next);
+    return next;
+  }
+
+  function list(title, items) {
+    const box = el("div");
+    const ul = el("ul");
+    for (const x of items) ul.append(el("li", null, x));
+    box.append(el("div", "lab", title), ul);
+    box.firstChild.style.width = "auto";
+    return box;
+  }
+
+  function mount(root) {
+    if (!document.getElementById("t3sc")) {
+      const style = el("style", null, CSS);
+      style.id = "t3sc";
+      document.head.append(style);
+    }
     document.body.append(root);
   }
 
-  window.S = (d) =>
-    document.body ? render(d) : addEventListener("DOMContentLoaded", () => render(d));
+  function task(d) {
+    const [work, delivery] = TYPES[d.y] || TYPES.feature;
+    const state = d.s || "a";
+    const p = d.p || 0;
+    const step = d.d || 0;
+    const root = el("div", "s");
+    root.append(header(d, state, [d.i]));
+    // Once delivery has started the work track is done and only adds noise.
+    if (work.length && !step) root.append(track("Werk", work, p, state));
+    if (delivery.length && (step || p >= work.length)) root.append(track("Levering", delivery, step, state));
+    root.append(nextStep(d));
+    mount(root);
+  }
+
+  function run(d) {
+    const state = d.s || "a";
+    const items = d.q || [];
+    const accepted = items.filter((q) => q[2] === "ok").length;
+    const root = el("div", "s");
+    root.append(header(d, state, [items.length ? `${accepted}/${items.length} geaccepteerd` : "", d.m]));
+    if (items.length) {
+      const grid = el("div", "g");
+      for (const [ref, label, status] of items) {
+        const it = el("div", "it");
+        it.title = `${ref} ${label || ""}`.trim();
+        it.append(el("i", "dot " + (status || "")), el("b", null, ref), el("span", null, label || ""));
+        grid.append(it);
+      }
+      root.append(grid);
+    }
+    const lists = [["Acceptatie", d.a], ["Buiten scope / stoppunten", d.o], ["Nog open", d.n]].filter((x) => x[1]?.length);
+    if (lists.length) {
+      const cols = el("div", "cols");
+      for (const [title, xs] of lists) cols.append(list(title, xs));
+      root.append(cols);
+    }
+    if (d.y && d.d) root.append(track("Levering", (TYPES[d.y] || TYPES.feature)[1], d.d, state));
+    root.append(nextStep(d));
+    mount(root);
+  }
+
+  const ready = (fn) => (d) =>
+    document.body ? fn(d) : addEventListener("DOMContentLoaded", () => fn(d));
+  window.S = ready(task);
+  window.R = ready(run);
 })();
