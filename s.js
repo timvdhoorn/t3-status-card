@@ -4,7 +4,7 @@
 //   t task title, i issue/PR ref such as "#1353", v release version such as "1.131.2"
 //   p work phase 1-4 (0 = no work track), d delivery step 1-n (0 = not started)
 //   s state: a agent busy | u your turn | c waiting on CI/system | b blocked | d done
-//   w what is awaited or blocking, shown next to the state
+//   w what is awaited or blocking, shown under the title
 //   k next step: c command (default) | q decision | 0 nothing; x its text
 //   l optional [label, https-url]
 // Run card for multi-item runs: R({t,m,v,s,w,q,a,o,n,y,d,k,x,l})
@@ -22,38 +22,40 @@
     review: [["Afbakenen", "Onderzoek", "Bevindingen", "Rapport"], []],
     release: [[], ["Bundelen", "Versie", "CI", "Deploy", "Productie", "Akkoord"]],
   };
-  const STATES = { a: "bezig", u: "jouw beurt", c: "wacht op systeem", b: "geblokkeerd", d: "afgerond" };
-  const CSS = `body{margin:0;font:13px/1.5 var(--font-sans);color:var(--foreground)}
-.s{display:grid;gap:8px;padding:4px 0}
-.r{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}
-.t{font-weight:600}.m{color:var(--muted-foreground)}
-.p{font-size:11px;padding:0 7px;border-radius:99px;background:var(--muted)}
-.p.a{background:var(--accent-surface);color:var(--accent-surface-foreground)}
-.p.u{background:var(--warning-surface);color:var(--warning-foreground)}
-.p.b{background:var(--destructive-surface);color:var(--destructive-foreground)}
-.p.d{background:var(--success);color:#fff}
-.tr{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;width:100%;max-width:560px}
-.st{display:grid;gap:3px;font-size:11px;color:var(--muted-foreground);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.st i{height:5px;border-radius:3px;background:var(--muted)}
-.st.done{color:var(--foreground)}.st.done i{background:var(--primary);opacity:.5}
-.st.cur{color:var(--foreground);font-weight:600}.st.cur i{background:var(--primary)}
-.st.cur.b{color:var(--destructive-foreground)}.st.cur.b i{background:var(--destructive)}
-.st.cur.u i{background:var(--warning)}
-.lab{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-foreground);width:64px;flex:none}
+  const STATES = { a: "Bezig", u: "Jouw beurt", c: "Wacht", b: "Geblokkeerd", d: "Afgerond" };
+  const CSS = `body{margin:0;font:14px/1.45 var(--font-sans);color:var(--foreground)}
+.card{display:grid;gap:6px;padding:12px 16px;border:1px solid var(--border);border-radius:calc(var(--radius) * 1.6)}
+.card+.card{margin-top:10px}
+.row{display:flex;gap:8px;align-items:center;min-width:0}
+.wrap{flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--muted-foreground)}
+.dot.a{background:var(--primary)}.dot.u{background:var(--warning)}.dot.b{background:var(--destructive)}.dot.d{background:var(--success)}
+.title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.state{flex:none;white-space:nowrap}.state::before{content:"· ";color:var(--muted-foreground)}
+.state.a{color:var(--primary)}.state.u{color:var(--warning-foreground)}.state.c{color:var(--muted-foreground)}
+.state.b{color:var(--destructive-foreground)}.state.d{color:var(--success-foreground)}
+.side{margin-left:auto;flex:none;color:var(--muted-foreground);font-size:13px;font-variant-numeric:tabular-nums}
+.sub{color:var(--muted-foreground);font-size:13px;padding-left:17px}
+.prog{display:flex;gap:8px;align-items:center;padding-left:17px;font-size:13px;color:var(--muted-foreground);min-width:0}
+.seg{display:flex;gap:3px;flex:none}.seg i{width:14px;height:4px;border-radius:2px;background:var(--muted)}
+.seg i.done{background:var(--primary);opacity:.45}.seg i.cur{background:var(--primary)}
+.seg i.cur.u{background:var(--warning)}.seg i.cur.b{background:var(--destructive)}
+.prog b{color:var(--foreground);font-weight:600}
+.next{display:flex;gap:6px;flex-wrap:wrap;padding-left:17px;margin-top:2px}
 button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;max-width:100%;box-sizing:border-box;font:12px var(--font-mono);background:var(--code-background);color:var(--code-foreground);padding:4px 8px;border-radius:6px;border:1px solid var(--border)}
 button:hover,button:focus-visible{border-color:var(--ring)}
 button code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 button span{font:11px var(--font-sans);color:var(--muted-foreground);flex:none}
 button.l{font-family:var(--font-sans)}
-.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px}
-.it{display:flex;gap:6px;align-items:center;font-size:12px;padding:3px 8px;border-radius:6px;background:var(--card);border:1px solid var(--border);min-width:0}
+.q{font-size:13px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px;padding-left:17px}
+.it{display:flex;gap:6px;align-items:center;font-size:12px;padding:3px 8px;border-radius:6px;background:var(--muted);min-width:0}
 .it b{font-weight:600;font-variant-numeric:tabular-nums;flex:none}.it span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted-foreground)}
-.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--muted-foreground);opacity:.4}
-.dot.ok{background:var(--success);opacity:1}.dot.r{background:var(--primary);opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 30%,transparent)}
-.dot.u{background:var(--warning);opacity:1}.dot.b{background:var(--destructive);opacity:1}
-.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 16px}
-.s+.s{margin-top:14px}
-.cols ul{margin:0;padding-left:18px}.cols li{margin:1px 0}`;
+.it .dot{width:7px;height:7px;opacity:.5}.it .dot.ok{background:var(--success);opacity:1}.it .dot.r{background:var(--primary);opacity:1}
+.it .dot.u{opacity:1}.it .dot.b{opacity:1}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px 16px;padding-left:17px;font-size:13px}
+.lab{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-foreground)}
+.cols ul{margin:0;padding-left:16px}.cols li{margin:1px 0}`;
 
   const el = (tag, cls, text) => {
     const e = document.createElement(tag);
@@ -81,36 +83,36 @@ button.l{font-family:var(--font-sans)}
     parent.postMessage({ jsonrpc: "2.0", id: Date.now(), method: "ui/open-link", params: { url } }, "*");
   }
 
-  // A track row: steps before `at` are done; `at` is current unless the task is done.
-  function track(label, steps, at, state) {
-    const row = el("div", "r");
-    const bar = el("div", "tr");
-    steps.forEach((name, n) => {
-      const step = n + 1;
-      let cls = "st";
-      if (step < at || (step === at && state === "d")) cls += " done";
-      else if (step === at) cls += " cur " + state;
-      const s = el("div", cls);
-      s.append(el("i"), name);
-      s.title = name;
-      bar.append(s);
-    });
-    row.append(el("span", "lab", label), bar);
+  // Title row: status dot, title, coloured state word, refs on the right.
+  function header(d, state, side) {
+    const row = el("div", "row");
+    row.append(el("i", "dot " + state), el("span", "title", d.t), el("span", "state " + state, STATES[state]));
+    const refs = side.filter(Boolean).join(" · ");
+    if (refs) row.append(el("span", "side", refs));
     return row;
   }
 
-  function header(d, state, extra) {
-    const head = el("div", "r");
-    head.append(el("span", "t", d.t));
-    for (const x of extra) if (x) head.append(el("span", "m", x));
-    if (d.v) head.append(el("span", "p", "v" + d.v));
-    head.append(el("span", "p " + state, STATES[state] + (d.w ? ": " + d.w : "")));
-    return head;
+  // Compact progress line: mini segments plus "Track: Step (n/total)".
+  function progress(label, steps, at, state) {
+    const row = el("div", "prog");
+    const seg = el("span", "seg");
+    steps.forEach((_, n) => {
+      const step = n + 1;
+      let cls = "";
+      if (step < at || (step === at && state === "d")) cls = "done";
+      else if (step === at) cls = "cur " + state;
+      seg.append(el("i", cls));
+    });
+    const text = el("span");
+    if (at > 0) text.append(label + ": ", el("b", null, steps[at - 1]), ` (${at}/${steps.length})`);
+    else text.append(label + ": nog niet gestart");
+    row.append(seg, text);
+    return row;
   }
 
   function nextStep(d) {
     const k = d.k || "c";
-    const next = el("div", "r");
+    const next = el("div", "next");
     if (k === "c" && d.x) {
       const b = el("button");
       const code = el("code", null, d.x);
@@ -119,15 +121,15 @@ button.l{font-family:var(--font-sans)}
       b.append(code, hint);
       b.onclick = async () => (hint.textContent = await copy(d.x, code));
       next.append(b);
-    } else {
-      next.append(el("span", k === "q" ? "" : "m", k === "q" ? "Beslissing: " + d.x : "Niets meer te doen"));
+    } else if (k === "q" && d.x) {
+      next.append(el("span", "q", "Beslissing: " + d.x));
     }
     if (d.l && /^https?:\/\//.test(d.l[1])) {
       const a = el("button", "l", d.l[0] + " ↗");
       a.onclick = () => openLink(d.l[1]);
       next.append(a);
     }
-    return next;
+    return next.childElementCount ? next : null;
   }
 
   function list(title, items) {
@@ -135,17 +137,16 @@ button.l{font-family:var(--font-sans)}
     const ul = el("ul");
     for (const x of items) ul.append(el("li", null, x));
     box.append(el("div", "lab", title), ul);
-    box.firstChild.style.width = "auto";
     return box;
   }
 
-  function mount(root) {
+  function mount(card) {
     if (!document.getElementById("t3sc")) {
       const style = el("style", null, CSS);
       style.id = "t3sc";
       document.head.append(style);
     }
-    document.body.append(root);
+    document.body.append(card);
   }
 
   function task(d) {
@@ -153,13 +154,16 @@ button.l{font-family:var(--font-sans)}
     const state = d.s || "a";
     const p = d.p || 0;
     const step = d.d || 0;
-    const root = el("div", "s");
-    root.append(header(d, state, [d.i]));
-    // Once delivery has started the work track is done and only adds noise.
-    if (work.length && !step) root.append(track("Werk", work, p, state));
-    if (delivery.length && (step || p >= work.length)) root.append(track("Levering", delivery, step, state));
-    root.append(nextStep(d));
-    mount(root);
+    const card = el("div", "card");
+    card.append(header(d, state, [d.i, d.v && "v" + d.v]));
+    if (d.w) card.append(el("div", "sub", d.w));
+    // Delivery replaces the work line once it has started.
+    if (delivery.length && (step || !work.length))
+      card.append(progress("Levering", delivery, step, state));
+    else if (work.length) card.append(progress("Werk", work, p, state));
+    const next = nextStep(d);
+    if (next) card.append(next);
+    mount(card);
   }
 
   function run(d) {
@@ -168,8 +172,10 @@ button.l{font-family:var(--font-sans)}
     const size = (q) => q[3] || 1;
     const total = items.reduce((sum, q) => sum + size(q), 0);
     const accepted = items.reduce((sum, q) => sum + (q[2] === "ok" ? size(q) : 0), 0);
-    const root = el("div", "s");
-    root.append(header(d, state, [items.length ? `${accepted}/${total} geaccepteerd` : "", d.m]));
+    const card = el("div", "card");
+    card.append(header(d, state, [items.length && `${accepted}/${total}`, d.v && "v" + d.v]));
+    const sub = [d.w, d.m].filter(Boolean).join(" · ");
+    if (sub) card.append(el("div", "sub", sub));
     if (items.length) {
       const grid = el("div", "g");
       for (const [ref, label, status] of items) {
@@ -178,17 +184,18 @@ button.l{font-family:var(--font-sans)}
         it.append(el("i", "dot " + (status || "")), el("b", null, ref), el("span", null, label || ""));
         grid.append(it);
       }
-      root.append(grid);
+      card.append(grid);
     }
     const lists = [["Acceptatie", d.a], ["Buiten scope / stoppunten", d.o], ["Nog open", d.n]].filter((x) => x[1]?.length);
     if (lists.length) {
       const cols = el("div", "cols");
       for (const [title, xs] of lists) cols.append(list(title, xs));
-      root.append(cols);
+      card.append(cols);
     }
-    if (d.y && d.d) root.append(track("Levering", (TYPES[d.y] || TYPES.feature)[1], d.d, state));
-    root.append(nextStep(d));
-    mount(root);
+    if (d.y && d.d) card.append(progress("Levering", (TYPES[d.y] || TYPES.feature)[1], d.d, state));
+    const next = nextStep(d);
+    if (next) card.append(next);
+    mount(card);
   }
 
   const ready = (fn) => (d) =>
