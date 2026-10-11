@@ -1,5 +1,6 @@
 // Task status card for T3 Code html_render frames.
 // Usage: <script src=".../s.js"></script><script>S({y,t,i,p,d,s,w,k,x,v,l})</script>
+// Language: English by default; load ".../s.js?lang=nl" for Dutch labels.
 //   y type: feature | fix | infra | review | release (sets phase and delivery labels)
 //   t task title, i issue/PR ref such as "#1353", v release version such as "1.131.2"
 //   p work phase 1-4 (0 = no work track), d delivery step 1-n (0 = not started)
@@ -17,14 +18,41 @@
 //   y with d: show the delivery track of that type at step d
 //   k/x/l next step as in S
 (() => {
-  const TYPES = {
-    feature: [["Scope", "Plan", "Bouwen", "Verifiëren"], ["PR", "CI", "Merge", "Deploy", "Productie", "Akkoord"]],
-    fix: [["Diagnose", "Plan", "Fixen", "Verifiëren"], ["PR", "CI", "Merge", "Deploy", "Productie", "Akkoord"]],
-    infra: [["Meten", "Plan", "Uitvoeren", "Verifiëren"], ["PR", "CI", "Merge"]],
-    review: [["Afbakenen", "Onderzoek", "Bevindingen", "Rapport"], []],
-    release: [[], ["Bundelen", "Versie", "CI", "Deploy", "Productie", "Akkoord"]],
+  const LANG = {
+    en: {
+      types: {
+        feature: [["Scope", "Plan", "Build", "Verify"], ["PR", "CI", "Merge", "Deploy", "Production", "Sign-off"]],
+        fix: [["Diagnose", "Plan", "Fix", "Verify"], ["PR", "CI", "Merge", "Deploy", "Production", "Sign-off"]],
+        infra: [["Measure", "Plan", "Execute", "Verify"], ["PR", "CI", "Merge"]],
+        review: [["Scope", "Research", "Findings", "Report"], []],
+        release: [[], ["Bundle", "Version", "CI", "Deploy", "Production", "Sign-off"]],
+      },
+      states: { a: "Working", u: "Your turn", c: "Waiting", b: "Blocked", d: "Done" },
+      steps: { k: "ok", r: "running", u: "your turn", b: "blocked", s: "skipped", "-": "open" },
+      work: "Work", delivery: "Delivery", notStarted: "not started", step: "Step",
+      copy: "copy", copied: "copied ✓", selected: "selected, ⌘/Ctrl+C", decision: "Decision: ",
+      lists: ["Acceptance", "Out of scope / stop points", "Still open"],
+    },
+    nl: {
+      types: {
+        feature: [["Scope", "Plan", "Bouwen", "Verifiëren"], ["PR", "CI", "Merge", "Deploy", "Productie", "Akkoord"]],
+        fix: [["Diagnose", "Plan", "Fixen", "Verifiëren"], ["PR", "CI", "Merge", "Deploy", "Productie", "Akkoord"]],
+        infra: [["Meten", "Plan", "Uitvoeren", "Verifiëren"], ["PR", "CI", "Merge"]],
+        review: [["Afbakenen", "Onderzoek", "Bevindingen", "Rapport"], []],
+        release: [[], ["Bundelen", "Versie", "CI", "Deploy", "Productie", "Akkoord"]],
+      },
+      states: { a: "Bezig", u: "Jouw beurt", c: "Wacht", b: "Geblokkeerd", d: "Afgerond" },
+      steps: { k: "ok", r: "bezig", u: "jouw beurt", b: "geblokkeerd", s: "overgeslagen", "-": "open" },
+      work: "Werk", delivery: "Levering", notStarted: "nog niet gestart", step: "Stap",
+      copy: "kopieer", copied: "gekopieerd ✓", selected: "geselecteerd, ⌘/Ctrl+C", decision: "Beslissing: ",
+      lists: ["Acceptatie", "Buiten scope / stoppunten", "Nog open"],
+    },
   };
-  const STATES = { a: "Bezig", u: "Jouw beurt", c: "Wacht", b: "Geblokkeerd", d: "Afgerond" };
+  const src = document.currentScript && document.currentScript.src;
+  const lang = (src && new URL(src).searchParams.get("lang")) || "en";
+  const T = LANG[lang] || LANG.en;
+  const TYPES = T.types;
+  const STATES = T.states;
   const CSS = `body{margin:0;font:14px/1.45 var(--font-sans);color:var(--foreground)}
 .card{display:grid;gap:6px;padding:12px 16px;border:1px solid var(--border);border-radius:calc(var(--radius) * 1.6)}
 .card+.card{margin-top:10px}
@@ -74,16 +102,16 @@ button.l{font-family:var(--font-sans)}
   async function copy(text, node) {
     try {
       await navigator.clipboard.writeText(text);
-      return "gekopieerd ✓";
+      return T.copied;
     } catch {}
     const range = document.createRange();
     range.selectNodeContents(node);
     getSelection().removeAllRanges();
     getSelection().addRange(range);
     try {
-      if (document.execCommand("copy")) return "gekopieerd ✓";
+      if (document.execCommand("copy")) return T.copied;
     } catch {}
-    return "geselecteerd, ⌘/Ctrl+C";
+    return T.selected;
   }
 
   function openLink(url) {
@@ -112,7 +140,7 @@ button.l{font-family:var(--font-sans)}
     });
     const text = el("span");
     if (at > 0) text.append(label + ": ", el("b", null, steps[at - 1]), ` (${at}/${steps.length})`);
-    else text.append(label + ": nog niet gestart");
+    else text.append(label + ": " + T.notStarted);
     row.append(seg, text);
     return row;
   }
@@ -123,13 +151,13 @@ button.l{font-family:var(--font-sans)}
     if (k === "c" && d.x) {
       const b = el("button");
       const code = el("code", null, d.x);
-      const hint = el("span", null, "kopieer");
+      const hint = el("span", null, T.copy);
       b.title = d.x;
       b.append(code, hint);
       b.onclick = async () => (hint.textContent = await copy(d.x, code));
       next.append(b);
     } else if (k === "q" && d.x) {
-      next.append(el("span", "q", "Beslissing: " + d.x));
+      next.append(el("span", "q", T.decision + d.x));
     }
     if (d.l && /^https?:\/\//.test(d.l[1])) {
       const a = el("button", "l", d.l[0] + " ↗");
@@ -166,14 +194,13 @@ button.l{font-family:var(--font-sans)}
     if (d.w) card.append(el("div", "sub", d.w));
     // Delivery replaces the work line once it has started.
     if (delivery.length && (step || !work.length))
-      card.append(progress("Levering", delivery, step, state));
-    else if (work.length) card.append(progress("Werk", work, p, state));
+      card.append(progress(T.delivery, delivery, step, state));
+    else if (work.length) card.append(progress(T.work, work, p, state));
     if (d.g) {
-      const names = { k: "ok", r: "bezig", u: "jouw beurt", b: "geblokkeerd", s: "overgeslagen", "-": "open" };
       const row = el("div", "steps");
       [...d.g].forEach((c, n) => {
         const i = el("i", c === "-" ? "" : c, String(n + 1));
-        i.title = `Stap ${n + 1}: ${names[c] || "open"}`;
+        i.title = `${T.step} ${n + 1}: ${T.steps[c] || T.steps["-"]}`;
         row.append(i);
       });
       card.append(row);
@@ -203,13 +230,13 @@ button.l{font-family:var(--font-sans)}
       }
       card.append(grid);
     }
-    const lists = [["Acceptatie", d.a], ["Buiten scope / stoppunten", d.o], ["Nog open", d.n]].filter((x) => x[1]?.length);
+    const lists = [[T.lists[0], d.a], [T.lists[1], d.o], [T.lists[2], d.n]].filter((x) => x[1]?.length);
     if (lists.length) {
       const cols = el("div", "cols");
       for (const [title, xs] of lists) cols.append(list(title, xs));
       card.append(cols);
     }
-    if (d.y && d.d) card.append(progress("Levering", (TYPES[d.y] || TYPES.feature)[1], d.d, state));
+    if (d.y && d.d) card.append(progress(T.delivery, (TYPES[d.y] || TYPES.feature)[1], d.d, state));
     const next = nextStep(d);
     if (next) card.append(next);
     mount(card);
