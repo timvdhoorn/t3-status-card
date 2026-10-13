@@ -76,7 +76,10 @@ button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;max-widt
 button:hover,button:focus-visible{border-color:var(--ring)}
 button code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 button span{font:11px var(--font-sans);color:var(--muted-foreground);flex:none}
-button.l{font-family:var(--font-sans)}
+a.l{display:flex;align-items:center;font:12px var(--font-sans);color:var(--foreground);text-decoration:none;padding:4px 8px;border-radius:6px;border:1px solid var(--border)}
+a.l:hover,a.l:focus-visible{border-color:var(--ring);outline:none}
+.side a{color:inherit;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:2px}
+.side a:hover{color:var(--foreground)}
 .q{font-size:13px}
 .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px;padding-left:17px}
 .it{display:flex;gap:6px;align-items:center;font-size:12px;padding:3px 8px;border-radius:6px;background:var(--muted);min-width:0}
@@ -114,16 +117,30 @@ button.l{font-family:var(--font-sans)}
     return T.selected;
   }
 
-  function openLink(url) {
-    parent.postMessage({ jsonrpc: "2.0", id: Date.now(), method: "ui/open-link", params: { url } }, "*");
+  // A real link: T3's frame bootstrap opens it like a chat link (a PR opens in
+  // the right panel, Cmd/Ctrl-click goes to the system browser).
+  function link(cls, text, url) {
+    const a = el("a", cls, text);
+    a.href = url;
+    return a;
   }
 
+  const url = (d) => d.l && /^https?:\/\//.test(d.l[1]) && d.l[1];
+
   // Title row: status dot, title, coloured state word, refs on the right.
+  // A ref matching the link's label links to it.
   function header(d, state, side) {
     const row = el("div", "row");
     row.append(el("i", "dot " + state), el("span", "title", d.t), el("span", "state " + state, STATES[state]));
-    const refs = side.filter(Boolean).join(" · ");
-    if (refs) row.append(el("span", "side", refs));
+    const refs = side.filter(Boolean);
+    if (refs.length) {
+      const box = el("span", "side");
+      refs.forEach((ref, n) => {
+        if (n) box.append(" · ");
+        box.append(ref === d.i && url(d) ? link(null, ref, url(d)) : ref);
+      });
+      row.append(box);
+    }
     return row;
   }
 
@@ -159,11 +176,7 @@ button.l{font-family:var(--font-sans)}
     } else if (k === "q" && d.x) {
       next.append(el("span", "q", T.decision + d.x));
     }
-    if (d.l && /^https?:\/\//.test(d.l[1])) {
-      const a = el("button", "l", d.l[0] + " ↗");
-      a.onclick = () => openLink(d.l[1]);
-      next.append(a);
-    }
+    if (url(d)) next.append(link("l", d.l[0], url(d)));
     return next.childElementCount ? next : null;
   }
 
